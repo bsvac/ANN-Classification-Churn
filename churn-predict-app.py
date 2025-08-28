@@ -49,18 +49,30 @@ st.title('Customer Churn Predictor')
 #     'EstimatedSalary': 50000
 # }
 
+# geography = st.selectbox('Geography:', onehot_encoder_geo.categories_[0])  # default first
+# gender = st.selectbox('Gender:', label_encoder_gender.classes_)            # default first
+
+# age = st.slider("Select Your Age:", min_value=18, max_value=80, value=30)
+# tenure = st.slider("Tenure:", min_value=1, max_value=10, step=1, value=3)
+# numproducts = st.slider("Number Of Products:", min_value=1, max_value=4, step=1, value=1)
+
+# creditscore = st.number_input("Enter Your Credit Score:", min_value=0, value=650, step=1, format="%d")
+# balance = st.number_input("Balance:", min_value=0, value=0, step=1, format="%d")
+# estsalary = st.number_input("Estimated Salary:", min_value=0, value=50000, step=1, format="%d")
+
+
 ## User Inputs
-geography = st.selectbox('Geography:', onehot_encoder_geo.categories_[0], index=None)
-gender = st.selectbox('Gender:', label_encoder_gender.classes_, index=None)
-age = st.slider("Select Your Age:", min_value=18, max_value=80)
-#st.write(f"You selected: {age}")
-tenure = st.slider("Tenure:", min_value=1, max_value=10, step=1, value=None)
-#st.write(f"You selected: {tenure}")
-numproducts = st.slider("Number Of Products:", min_value=1, max_value=4, step=1, value=None)
-creditscore = st.number_input("Enter Your Credit Score: ", step=1, value=None, format="%d")
-#st.write(f"You entered: {creditscore}")
-balance = st.number_input("Balance: ", step=1, value=None, format="%d")
-estsalary = st.number_input("Estimated Salary: ", step=1, value=None, format="%d")
+geography = st.selectbox('Geography:', onehot_encoder_geo.categories_[0])
+gender = st.selectbox('Gender:', label_encoder_gender.classes_)
+
+age = st.slider("Select Your Age:", min_value=18, max_value=80, value=25)
+tenure = st.slider("Tenure:", min_value=1, max_value=10, step=1, value=3)
+numproducts = st.slider("Number Of Products:", min_value=1, max_value=4, step=1, value=1)
+
+creditscore = st.number_input("Enter Your Credit Score:", min_value=0, value=650, step=1, format="%d")
+balance = st.number_input("Balance:", min_value=0, value=0, step=1, format="%d")
+estsalary = st.number_input("Estimated Salary:", min_value=0, value=50000, step=1, format="%d")
+
 has_cr_card = st.selectbox('Has Credit Card', options=['False', 'True'], index=1) ## To make 'True' the default selected option (which maps to 1)
 is_active_member = st.selectbox('Is Active Member', options=['False', 'True'], index=1) ## To make 'True' the default selected option (which maps to 1)
 
@@ -71,27 +83,44 @@ is_active_member_int = 1 if is_active_member == 'True' else 0
 
 
 ##Compile the user inputs for further processing
-input_data = pd.DataFrame( {
-    'CreditScore': [creditscore],
-    'Gender': [label_encoder_gender.transform([gender])[0]],
-    'Age': [age],
-    'Tenure': [tenure],
-    'Balance': [balance],
-    'NumOfProducts': [numproducts],
-    'HasCrCard': [has_cr_card_int],
-    'IsActiveMember': [is_active_member_int],
-    'EstimatedSalary': [estsalary]
- } )
+# input_data = pd.DataFrame( {
+#     'CreditScore': [creditscore],
+#     'Gender': [label_encoder_gender.transform([gender])[0]],
+#     'Age': [age],
+#     'Tenure': [tenure],
+#     'Balance': [balance],
+#     'NumOfProducts': [numproducts],
+#     'HasCrCard': [has_cr_card_int],
+#     'IsActiveMember': [is_active_member_int],
+#     'EstimatedSalary': [estsalary]
+#  } )
+input_data = {
+    'CreditScore': creditscore,
+    'Gender': gender,
+    'Age': age,
+    'Tenure': tenure,
+    'Balance': balance,
+    'NumOfProducts': numproducts,
+    'HasCrCard': has_cr_card_int,
+    'IsActiveMember': is_active_member_int,
+    'EstimatedSalary': estsalary
+ } 
+
+##Convert the input_data to dataframe
+input_df=pd.DataFrame([input_data])
+
+##Label Encode Gender Categorical Variable
+input_df['Gender']=label_encoder_gender.transform(input_df['Gender'])
 
 # One-hot encode 'Geography'
 geo_encoded = onehot_encoder_geo.transform([[geography]]).toarray()
 geo_encoded_df = pd.DataFrame(geo_encoded, columns=onehot_encoder_geo.get_feature_names_out(['Geography']))
 
 # Combine one-hot encoded columns with input data
-input_data = pd.concat([input_data.reset_index(drop=True), geo_encoded_df], axis=1)
+input_df = pd.concat([input_df.reset_index(drop=True), geo_encoded_df], axis=1)
 
 ## Scaling the input_data
-input_scaled=scaler.transform(input_data)
+input_scaled=scaler.transform(input_df)
 
 ## Predict the CHURN Now
 prediction=model.predict(input_scaled)
